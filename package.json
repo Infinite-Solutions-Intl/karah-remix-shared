@@ -1,0 +1,19 @@
+{
+  "name": "@karah/shared",
+  "version": "1.0.0",
+  "description": "Moteur de validation et de logique conditionnelle partagé entre l'API, le web et le mobile.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "tsc -p tsconfig.json --outDir /tmp/karah-shared-test && node /tmp/karah-shared-test/tests/run.js"
+  },
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0"
+  }
+}
