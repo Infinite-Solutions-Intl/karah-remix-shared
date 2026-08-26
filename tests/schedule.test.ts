@@ -106,3 +106,21 @@ check('validateSchedule détecte les erreurs', () => {
 
 console.log(`\n${passed} réussis, ${failed} échoués\n`);
 if (failed > 0) { process.exitCode = 1; throw new Error('échecs'); }
+
+// ---- Détection de la prise en charge des fuseaux (point critique React Native)
+import { hasTimezoneSupport, isTimezoneAware } from '../src/collection-schedule.util';
+
+console.log('\n— prise en charge des fuseaux —');
+check('détectée dans Node', () => eq(hasTimezoneSupport(), true));
+check('résultat mémoïsé et stable', () => {
+  eq(isTimezoneAware(), isTimezoneAware());
+});
+check('le contrôle compare DEUX fuseaux distincts', () => {
+  // Un contrôle qui se contenterait de « Intl existe » passerait sur Hermes sans ICU,
+  // où l'option timeZone est ignorée sans lever d'erreur.
+  const a = new Intl.DateTimeFormat('en-US', { timeZone: 'Africa/Douala', hour: '2-digit', hour12: false }).format(new Date('2026-01-01T12:00:00Z'));
+  const b = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: '2-digit', hour12: false }).format(new Date('2026-01-01T12:00:00Z'));
+  if (a === b) throw new Error('les deux fuseaux donnent la même heure');
+});
+
+console.log(`\nTOTAL ${passed} réussis, ${failed} échoués\n`);

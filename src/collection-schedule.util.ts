@@ -75,11 +75,75 @@ export const DEFAULT_TIMEZONE = 'Africa/Douala';
  * `Intl` est employé plutôt qu'un décalage fixe : il connaît les changements d'heure, qu'un
  * décalage codé en dur ferait dériver deux fois par an dans les pays concernés.
  */
+/**
+ * L'environnement sait-il vraiment convertir vers un fuseau donné ?
+ *
+ * ⚠️ POINT CRITIQUE POUR REACT NATIVE.
+ *
+ * Sur Android, le moteur Hermes est compilé sans données ICU complètes dans certaines
+ * configurations. `Intl.DateTimeFormat` existe alors, ne lève AUCUNE erreur, mais **ignore
+ * l'option `timeZone`** : il renvoie l'heure locale de l'appareil.
+ *
+ * Un simple `try/catch` ne détecte pas ce cas — c'est précisément ce qui le rend dangereux.
+ * Le contrôle ci-dessous convertit un instant connu et vérifie que le résultat correspond au
+ * fuseau demandé.
+ *
+ * En cas d'échec, la conversion retombe sur l'heure de l'appareil. Sur le terrain, l'enquêteur
+ * est presque toujours dans le fuseau de sa collecte : le repli est correct dans la quasi-
+ * totalité des cas. Mais il cesse de l'être pour une supervision à distance, et c'est pourquoi
+ * il est signalé plutôt que silencieux.
+ */
+export function hasTimezoneSupport(): boolean {
+  try {
+    // 2026-01-01T12:00:00Z vaut 13:00 à Douala (UTC+1) et 07:00 à New York (UTC-5).
+    const reference = new Date('2026-01-01T12:00:00Z');
+
+    const douala = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Africa/Douala',
+      hour: '2-digit',
+      hour12: false,
+    }).format(reference);
+
+    const newYork = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York',
+      hour: '2-digit',
+      hour12: false,
+    }).format(reference);
+
+    // Deux fuseaux distincts doivent donner deux heures distinctes. Si elles coïncident,
+    // l'option `timeZone` est ignorée.
+    return douala !== newYork;
+  } catch {
+    return false;
+  }
+}
+
+/** Résultat mémoïsé : le contrôle est constant pour un environnement donné. */
+let timezoneSupport: boolean | null = null;
+
+export function isTimezoneAware(): boolean {
+  if (timezoneSupport === null) timezoneSupport = hasTimezoneSupport();
+  return timezoneSupport;
+}
+
 export function getLocalParts(
   instant: Date,
   timezone: string,
 ): { weekday: number; minutes: number; ymd: string } {
   let parts: Intl.DateTimeFormatPart[];
+
+  // Environnement sans conversion de fuseau : on emploie l'heure de l'appareil plutôt que de
+  // produire une heure fausse en prétendant qu'elle est celle du terrain.
+  if (!isTimezoneAware()) {
+    const weekday = instant.getDay();
+    const pad = (value: number) => String(value).padStart(2, '0');
+
+    return {
+      weekday,
+      minutes: instant.getHours() * 60 + instant.getMinutes(),
+      ymd: `${instant.getFullYear()}-${pad(instant.getMonth() + 1)}-${pad(instant.getDate())}`,
+    };
+  }
 
   try {
     parts = new Intl.DateTimeFormat('en-US', {

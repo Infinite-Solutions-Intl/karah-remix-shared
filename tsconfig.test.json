@@ -1,0 +1,11 @@
+{
+  // Les tests emploient `console` et `process` : ils ont besoin des types Node, que le paquet
+  // lui-même n'utilise jamais. Les déclarer ici plutôt que dans tsconfig.json permet de
+  // compiler le paquet sans @types/node — ce que fait le script `prepare` chez le consommateur.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": ".test-build",
+    "types": ["node"]
+  },
+  "include": ["src/**/*", "tests/**/*"]
+}

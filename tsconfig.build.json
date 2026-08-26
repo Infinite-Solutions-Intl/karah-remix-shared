@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src"
+  },
+  "include": ["src/**/*"],
+  "//": "Les tests sont EXCLUS du paquet publié : ils doublent sa taille et n'ont aucune utilité chez le consommateur. `tsconfig.json` les inclut pour `pnpm test`."
+}

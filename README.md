@@ -26,16 +26,27 @@ Chacun venait de la même cause : **deux copies d'une règle finissent toujours 
 
 ## Installation
 
-```bash
-# Dans ce dossier
-pnpm install && pnpm build
+### En développement local
 
-# Dans chaque projet consommateur
-pnpm add file:../karah-shared
+```bash
+pnpm install && pnpm build
+cd ../karah-api && pnpm add file:../karah-shared
 ```
 
-Un registre privé (npm, GitHub Packages, Verdaccio) est préférable dès que le mobile est
-développé sur un autre poste : `file:` suppose une arborescence partagée.
+### En déploiement — Railway, EAS
+
+`file:` **ne fonctionne pas** : Railway clone un seul dépôt, le dossier voisin n'existe pas.
+Employez une dépendance Git, versionnée par tag :
+
+```json
+"@karah/shared": "github:Infinite-Solutions-Intl/karah-remix-shared#v1.0.0"
+```
+
+Le script `prepare` compile automatiquement à l'installation. Aucun jeton, aucune variable
+d'environnement, aucun script de build supplémentaire.
+
+📖 **Voir [DEPLOIEMENT.md](./DEPLOIEMENT.md)** pour le détail des trois voies possibles, la
+configuration React Native et le piège des fuseaux horaires sur Android.
 
 ---
 
